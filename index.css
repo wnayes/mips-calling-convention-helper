@@ -1,0 +1,32 @@
+html, body {
+  height: 100%;
+  width: 100%;
+  font-family: sans-serif;
+}
+
+#argCount, #localDataWords {
+  width: 4em;
+}
+
+.registerBox {
+  display: inline-block;
+  vertical-align: top;
+  width: 40px;
+  padding-bottom: 0.5em;
+}
+
+.registerBox label {
+  font-family: monospace;
+}
+
+.registerBoxSeparate {
+  padding-right: 1em;
+}
+
+.numTable td {
+  padding: 0.25em 0;
+}
+
+#assemblyOutput {
+  font-size: 130%;
+}

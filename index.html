@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>MIPS Calling Convention</title>
+
+    <link href="index.css" rel="stylesheet" type="text/css">
+
+    <script src="https://unpkg.com/vue"></script>
+
+    <meta charset="utf-8" />
+  </head>
+  <body>
+    <div id="app">
+      <h1>MIPS Calling Convention Helper</h1>
+
+      <div id="registers">
+        <p><label>Registers used:</label></p>
+        <div class="registerBox registerBoxSeparate">
+          <input type="checkbox" id="chk-at" v-model="regs.at" /><label for="chk-at">at</label>
+          <input type="checkbox" id="chk-v0" v-model="regs.v0" /><label for="chk-v0">v0</label>
+          <input type="checkbox" id="chk-v1" v-model="regs.v1" /><label for="chk-v1">v1</label>
+        </div>
+        <div class="registerBox registerBoxSeparate">
+          <input type="checkbox" id="chk-a0" v-model="regs.a0" /><label for="chk-a0">a0</label>
+          <input type="checkbox" id="chk-a1" v-model="regs.a1" /><label for="chk-a1">a1</label>
+          <input type="checkbox" id="chk-a2" v-model="regs.a2" /><label for="chk-a2">a2</label>
+          <input type="checkbox" id="chk-a3" v-model="regs.a3" /><label for="chk-a3">a3</label>
+        </div>
+        <div class="registerBox">
+          <input type="checkbox" id="chk-t0" v-model="regs.t0" /><label for="chk-t0">t0</label>
+          <input type="checkbox" id="chk-t1" v-model="regs.t1" /><label for="chk-t1">t1</label>
+          <input type="checkbox" id="chk-t2" v-model="regs.t2" /><label for="chk-t2">t2</label>
+          <input type="checkbox" id="chk-t3" v-model="regs.t3" /><label for="chk-t3">t3</label>
+        </div>
+        <div class="registerBox">
+          <input type="checkbox" id="chk-t4" v-model="regs.t4" /><label for="chk-t4">t4</label>
+          <input type="checkbox" id="chk-t5" v-model="regs.t5" /><label for="chk-t5">t5</label>
+          <input type="checkbox" id="chk-t6" v-model="regs.t6" /><label for="chk-t6">t6</label>
+          <input type="checkbox" id="chk-t7" v-model="regs.t7" /><label for="chk-t7">t7</label>
+        </div>
+        <div class="registerBox registerBoxSeparate">
+          <input type="checkbox" id="chk-t8" v-model="regs.t8" /><label for="chk-t8">t8</label>
+          <input type="checkbox" id="chk-t9" v-model="regs.t9" /><label for="chk-t9">t9</label>
+        </div>
+        <div class="registerBox">
+          <input type="checkbox" id="chk-s0" v-model="regs.s0" /><label for="chk-s0">s0</label>
+          <input type="checkbox" id="chk-s1" v-model="regs.s1" /><label for="chk-s1">s1</label>
+          <input type="checkbox" id="chk-s2" v-model="regs.s2" /><label for="chk-s2">s2</label>
+          <input type="checkbox" id="chk-s3" v-model="regs.s3" /><label for="chk-s3">s3</label>
+        </div>
+        <div class="registerBox registerBoxSeparate">
+          <input type="checkbox" id="chk-s4" v-model="regs.s4" /><label for="chk-s4">s4</label>
+          <input type="checkbox" id="chk-s5" v-model="regs.s5" /><label for="chk-s5">s5</label>
+          <input type="checkbox" id="chk-s6" v-model="regs.s6" /><label for="chk-s6">s6</label>
+          <input type="checkbox" id="chk-s7" v-model="regs.s7" /><label for="chk-s7">s7</label>
+        </div>
+        <div class="registerBox">
+          <!-- <input type="checkbox" id="chk-k0" v-model="regs.k0" /><label for="chk-k0">k0</label>
+          <input type="checkbox" id="chk-k1" v-model="regs.k1" /><label for="chk-k1">k1</label> -->
+          <input type="checkbox" id="chk-gp" v-model="regs.gp" /><label for="chk-gp">gp</label>
+          <input type="checkbox" id="chk-sp" v-model="regs.sp" /><label for="chk-sp">sp</label>
+          <input type="checkbox" id="chk-fp" v-model="regs.fp" /><label for="chk-fp">fp</label>
+          <input type="checkbox" id="chk-ra" v-model="regs.ra" /><label for="chk-ra">ra</label>
+        </div>
+      </div>
+
+      <br />
+      <table role="presentation" class="numTable">
+        <tr>
+          <td>
+            <label for="extraArgs">Argument count:</label>
+          </td>
+          <td>
+            <input id="argCount" type="number" v-model.number="argCount" />
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <label for="localDataWords">Local data size:</label>
+          </td>
+          <td>
+            <input id="localDataWords" type="number" v-model.number="localDataWords" /> <code>* 4</code>
+          </td>
+        </tr>
+      </table>
+
+      <h3>Generated assembly:</h3>
+
+      <pre id="assemblyOutput">{{assembly}}</pre>
+    </div>
+
+    <script src="index.js" type="module"></script>
+  </body>
+</html>
