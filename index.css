@@ -2,7 +2,7 @@ body {
   font-family: sans-serif;
 }
 
-#argCount, #localDataWords {
+#argWords, #localDataWords {
   width: 4em;
 }
 

@@ -16,7 +16,7 @@
       <div id="registers">
         <p><label>Registers needing stack space:</label></p>
         <div class="registerGroup">
-          <p>Callee saved:</p>
+          <label>Callee saved:</label><br />
           <div class="registerBox">
             <input type="checkbox" id="chk-s0" v-model="usedRegisters.s0" /><label for="chk-s0">s0</label>
             <input type="checkbox" id="chk-s1" v-model="usedRegisters.s1" /><label for="chk-s1">s1</label>
@@ -39,7 +39,7 @@
           </div>
         </div>
         <div class="registerGroup">
-          <p>Caller saved:</p>
+          <label>Caller saved:</label><br />
           <div class="registerBox registerBoxSeparate">
             <input type="checkbox" id="chk-a0" v-model="usedRegisters.a0" /><label for="chk-a0">a0</label>
             <input type="checkbox" id="chk-a1" v-model="usedRegisters.a1" /><label for="chk-a1">a1</label>
@@ -74,10 +74,10 @@
       <table role="presentation" class="numTable">
         <tr>
           <td>
-            <label for="extraArgs">Argument count:</label>
+            <label for="argWords">Argument words:</label>
           </td>
           <td>
-            <input id="argCount" type="number" min="0" v-model.number="argCount" />
+            <input id="argWords" type="number" min="0" v-model.number="argWords" />
           </td>
         </tr>
         <tr>
@@ -91,6 +91,14 @@
       </table>
 
       <h3>Generated assembly:</h3>
+
+      <p>
+        <input type="checkbox" id="includeHelp" v-model="includeHelp" />
+        <label for="includeHelp">Show hint code</label>
+
+        <input type="checkbox" id="useHexNumbers" v-model="useHexNumbers" />
+        <label for="useHexNumbers">Hexadecimal</label>
+      </p>
 
       <pre id="assemblyOutput">{{assembly}}</pre>
     </div>

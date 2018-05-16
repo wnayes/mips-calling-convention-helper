@@ -71,8 +71,10 @@ const callerSaved = [
 ];
 
 const state = {
-  argCount: 0,
+  argWords: 0,
   localDataWords: 0,
+  includeHelp: true,
+  useHexNumbers: false,
   usedRegisters: {},
 }
 
@@ -108,8 +110,8 @@ new Vue({
 });
 
 function updateAssembly() {
-  const argCount = Math.max(0, this.argCount);
-  const argumentSectionSize = argCount * 4;
+  const argWords = Math.max(0, this.argWords);
+  const argumentSectionSize = argWords ? Math.max(16, argWords * 4) : 0;
   const savedRegSectionSize = this.savedRegisterCount * 4;
   const savedTempRegSectionSize = this.savedTempRegisterCount * 4;
   const localDataWords = Math.max(0, this.localDataWords);
@@ -119,99 +121,117 @@ function updateAssembly() {
   const lowerSectionsDivBy8 = !!((argumentSectionSize + savedRegSectionSize) % 8);
   const lowerPadSize = (hasSomeLowerSections && lowerSectionsDivBy8) ? 4 : 0;
 
-  const stackSize = argumentSectionSize + savedRegSectionSize + lowerPadSize + savedTempRegSectionSize + localDataSectionSize;
+  let stackSize = argumentSectionSize + savedRegSectionSize + lowerPadSize + savedTempRegSectionSize + localDataSectionSize;
 
   const upperPadSize = (stackSize % 8) ? 4 : 0;
+  stackSize += upperPadSize;
+
+  const includeHelp = this.includeHelp;
+
+  const formatNumber = (n) => {
+    const numBase = this.useHexNumbers ? 16 : 10;
+    if (n && numBase === 16)
+      return "0x" + n.toString(16).toUpperCase();
+    return n.toString(numBase);
+  };
 
   let asm = "";
 
   if (stackSize > 0) {
     const totalPad = lowerPadSize + upperPadSize;
-    const padText = totalPad ? ` ; Including ${totalPad} byte pad` : "";
-    asm += `ADDIU SP SP -${stackSize}${padText}\n`;
+    const padText = (totalPad && includeHelp) ? ` ; Including ${totalPad} byte pad` : "";
+    asm += `ADDIU SP SP -${formatNumber(stackSize)}${padText}\n`;
   }
 
   const calleeSavedTopOffset = argumentSectionSize + savedRegSectionSize - 4;
   if (savedRegSectionSize) {
-    asm += generateSavedRegisterCode(this.usedRegisters, "SW", calleeSavedTopOffset, calleeSaved);
+    asm += generateSavedRegisterCode(this.usedRegisters, "SW", calleeSavedTopOffset, calleeSaved, formatNumber);
     asm += "\n";
   }
 
-  const beginCodeMessage = "; Begin code\n\n";
-  asm += beginCodeMessage;
+  if (includeHelp) {
+    const beginCodeMessage = "; Begin code\n\n";
+    asm += beginCodeMessage;
 
-  const callerSavedTopOffset = argumentSectionSize + savedRegSectionSize + lowerPadSize + savedTempRegSectionSize - 4;
-  if (savedTempRegSectionSize) {
-    asm += generateSavedRegisterCode(this.usedRegisters, "SW", callerSavedTopOffset, callerSaved);
-    asm += "\n";
-  }
-
-  if (argCount > 4) {
-    asm += "; Access additional arguments:\n";
-    asm += `LW reg 16(SP) ; arg4\n`;
-
-    if (argCount > 6) {
-      asm += "...\n";
-      asm += `LW reg ${(argCount - 1) * 4}(SP) ; arg${argCount - 1}\n`;
+    const callerSavedTopOffset = argumentSectionSize + savedRegSectionSize + lowerPadSize + savedTempRegSectionSize - 4;
+    if (savedTempRegSectionSize) {
+      asm += generateSavedRegisterCode(this.usedRegisters, "SW", callerSavedTopOffset, callerSaved, formatNumber);
+      asm += "\n";
     }
-    else if (argCount === 6) {
-      asm += `LW reg 20(SP) ; arg5\n`;
+
+    if (argWords > 0) {
+      asm += "; Using argument storage:\n";
+      asm += `SW reg 0(SP) ; arg0\n`;
+      if (argWords > 1)
+        asm += `SW reg ${formatNumber(4)}(SP) ; arg1\n`;
+      if (argWords > 2)
+        asm += `SW reg ${formatNumber(8)}(SP) ; arg2\n`;
+      if (argWords > 3)
+        asm += `SW reg ${formatNumber(12)}(SP) ; arg3\n`;
+
+      if (argWords > 5) {
+        asm += "...\n";
+        asm += `SW reg ${formatNumber((argWords - 1) * 4)}(SP) ; arg${argWords - 1}\n`;
+      }
+      else if (argWords === 5) {
+        asm += `SW reg ${formatNumber(16)}(SP) ; arg4\n`;
+      }
+      asm += "\n";
     }
-    asm += "\n";
-  }
 
-  if (localDataWords) {
-    asm += "; Access local data:\n";
+    if (localDataWords) {
+      asm += "; Access local data:\n";
 
-    let localStackOffset = argumentSectionSize + savedRegSectionSize + lowerPadSize + savedTempRegSectionSize;
+      let localStackOffset = argumentSectionSize + savedRegSectionSize + lowerPadSize + savedTempRegSectionSize;
 
-    asm += `LW reg ${localStackOffset}(SP) ; local0\n`;
+      asm += `LW reg ${formatNumber(localStackOffset)}(SP) ; local0\n`;
 
-    if (localDataWords > 2) {
-      asm += "...\n";
-      const lastLocalOffset = localStackOffset + ((localDataWords - 1) * 4);
-      asm += `LW reg ${lastLocalOffset}(SP) ; local${localDataWords - 1}\n`;
+      if (localDataWords > 2) {
+        asm += "...\n";
+        const lastLocalOffset = localStackOffset + ((localDataWords - 1) * 4);
+        asm += `LW reg ${formatNumber(lastLocalOffset)}(SP) ; local${localDataWords - 1}\n`;
+      }
+      else if (localDataWords === 2) {
+        asm += `LW reg ${formatNumber(localStackOffset + 4)}(SP) ; local1\n`;
+      }
+      asm += "\n";
     }
-    else if (localDataWords === 2) {
-      asm += `LW reg ${localStackOffset + 4}(SP) ; local1\n`;
+
+    if (savedTempRegSectionSize) {
+      asm += generateSavedRegisterCode(this.usedRegisters, "LW", callerSavedTopOffset, callerSaved, formatNumber);
+      asm += "\n";
     }
-    asm += "\n";
-  }
 
-  if (savedTempRegSectionSize) {
-    asm += generateSavedRegisterCode(this.usedRegisters, "LW", callerSavedTopOffset, callerSaved);
-    asm += "\n";
-  }
-
-  if (asm.endsWith(beginCodeMessage)) {
-    asm = asm.slice(0, -(beginCodeMessage.length));
-    asm += "; Your code\n\n";
-  }
-  else {
-    asm += "; End code\n\n";
+    if (asm.endsWith(beginCodeMessage)) {
+      asm = asm.slice(0, -(beginCodeMessage.length));
+      asm += "; Your code\n\n";
+    }
+    else {
+      asm += "; End code\n\n";
+    }
   }
 
   if (savedRegSectionSize) {
-    asm += generateSavedRegisterCode(this.usedRegisters, "LW", calleeSavedTopOffset, calleeSaved);
+    asm += generateSavedRegisterCode(this.usedRegisters, "LW", calleeSavedTopOffset, calleeSaved, formatNumber);
   }
 
   asm += "JR RA\n";
 
   if (stackSize > 0)
-    asm += `ADDIU SP SP ${stackSize}`;
+    asm += `ADDIU SP SP ${formatNumber(stackSize)}`;
   else
     asm += "NOP";
 
   return asm.trim();
 }
 
-function generateSavedRegisterCode(usedRegisters, op, maxOffset, regFilter) {
+function generateSavedRegisterCode(usedRegisters, op, maxOffset, regFilter, formatNumber) {
   let asm = "";
   let currentOffset = maxOffset;
   for (let i = regs.length - 1; i >= 0; i--) {
     const reg = regs[i];
     if (usedRegisters[reg] && (!regFilter || regFilter.indexOf(reg) >= 0)) {
-      asm += `${op} ${reg.toUpperCase()} ${currentOffset}(SP)\n`;
+      asm += `${op} ${reg.toUpperCase()} ${formatNumber(currentOffset)}(SP)\n`;
       currentOffset -= 4;
     }
   }
